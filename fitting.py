@@ -28,6 +28,10 @@ in_pkl_y = ROOT_PATH + '/data/mean_RLD_y.pkl'
 in_pkl_cil = ROOT_PATH + '/data/ci_99_low.pkl'
 in_pkl_cih = ROOT_PATH + '/data/ci_99_high.pkl'
 
+###### Input of the simulations
+
+in_sim = ROOT_PATH + '/data/lj_sim_rdf.txt'
+
 ####### Lennar Jonnes parameters
 
 sigma = 13.9 # Length parameter of the LJ potential function
@@ -43,8 +47,9 @@ max_r = 60
 ####### Showing results
 
 save = True # If None the graphs are plotted in block mode
+fig_fmt = 'svg'
 # Y-axis limits
-y_l, y_h = -.3, .8
+y_l, y_h = -.3, 1.1
 
 ####### Argon model parameters
 
@@ -63,7 +68,7 @@ import warnings
 import numpy as np
 from scipy import signal
 from scipy import optimize as opt
-from models import LJ_Morsali, sqe_mean, sqe_max, sqe_std, ynorm
+from models import LJ_Morsali, sqe_mean, sqe_max, sqe_std, ynorm, read_simulation
 import matplotlib.pyplot as plt
 
 ########## Print initial message
@@ -75,6 +80,8 @@ print 'Options:'
 print '\tExperimental data:'
 print '\t\tX-axis array pickle (radius in nm): ' + str(in_pkl_x)
 print '\t\tY-axis array pickle (RLD): ' + str(in_pkl_y)
+print '\tLJ simulated data:'
+print '\t\tText file with data: ' + str(in_sim)
 print '\tLJ parameters:'
 print '\t\tSigma: ' + str(sigma) + ' nm'
 print '\tArgon model: '
@@ -101,6 +108,9 @@ exp_x = pickle.load(open(in_pkl_x, 'rb'))
 exp_y = pickle.load(open(in_pkl_y, 'rb'))
 exp_yl = pickle.load(open(in_pkl_cil, 'rb'))
 exp_yh = pickle.load(open(in_pkl_cih, 'rb'))
+
+print '\tLoading simulated data...'
+sim_xy = read_simulation(in_sim)
 
 print '\tResampling data: '
 if resamp_f > 1:
@@ -144,11 +154,12 @@ plt.ylabel('RLD')
 plt.plot(exp_x, exp_y, 'b')
 rdl = models.rdf(exp_x, found_params[0], found_params[1])
 plt.plot(exp_x, rdl, 'k')
-plt.plot(exp_x, np.zeros(shape=len(exp_x)), 'k--')
+plt.plot(sim_xy[:, 0], sim_xy[:, 1], 'g')
+plt.plot(exp_x, np.ones(shape=len(exp_x)), 'k--')
 if save:
-    out_name = ROOT_PATH + '/figs/rld_s' + str(sigma) + '_r' + str(found_params[0]) + '_T' + \
-               str(found_params[1]) + '.svg'
-    plt.savefig(out_name, format='svg', dpi=1200)
+    out_name = ROOT_PATH + '/figs/rld_s' + str(sigma) + '_r' + str(round(found_params[0], 2)) + '_T' + \
+               str(round(found_params[1], 2)) + '.' + fig_fmt
+    plt.savefig(out_name, format=fig_fmt, dpi=1200)
 else:
     plt.show(block=True)
 plt.close()
@@ -160,16 +171,17 @@ plt.plot(exp_x, ynorm(exp_y, y_l, y_h), 'b')
 plt.fill_between(exp_x, ynorm(exp_yl, y_l, y_h), ynorm(exp_yh, y_l, y_h), alpha=0.5, color='b',
                  edgecolor='w')
 plt.plot(exp_x, ynorm(rdl, y_l, y_h), 'k')
+plt.plot(sim_xy[:, 0], ynorm(sim_xy[:, 1], y_l, y_h), 'g')
 plt.ylim((y_l, y_h))
 plt.plot(exp_x, np.zeros(shape=len(exp_x)), 'k--')
 if save:
-    out_name = ROOT_PATH + '/figs/nrld_s' + str(sigma) + '_r' + str(found_params[0]) + '_T' + \
-               str(found_params[1]) + '.svg'
-    plt.savefig(out_name, format='svg', dpi=1200)
+    out_name = ROOT_PATH + '/figs/nrld_s' + str(sigma) + '_r' + str(round(found_params[0], 2)) + '_T' + \
+               str(round(found_params[1], 2)) + '.' + fig_fmt
+    plt.savefig(out_name, format=fig_fmt, dpi=1200)
 else:
     plt.show(block=True)
 plt.close()
-y_l, y_h = y_l-0.5, y_h+0.4
+y_l, y_h = y_l-0.5, y_h+0.5
 plt.figure()
 plt.title('Argon Model ' + str(rho_arg) + ' ' + str(T_arg))
 plt.xlabel('Radius (nm)')
@@ -180,11 +192,12 @@ plt.fill_between(exp_x, ynorm(exp_yl, y_l, y_h), ynorm(exp_yh, y_l, y_h), alpha=
 plt.plot(exp_x, ynorm(rdl, y_l, y_h), 'k')
 plt.ylim((y_l, y_h))
 plt.plot(exp_x, np.zeros(shape=len(exp_x)), 'k--')
+plt.plot(sim_xy[:, 0], ynorm(sim_xy[:, 1], y_l, y_h), 'g')
 plt.plot(exp_x, ynorm(models.rdf(exp_x, rho_arg, T_arg), y_l, y_h), 'r')
 if save:
     out_name = ROOT_PATH + '/figs/nrld_argon_s' + str(sigma) + '_r' + str(rho_arg) + '_T' + \
-               str(T_arg) + '.svg'
-    plt.savefig(out_name, format='svg', dpi=1200)
+               str(T_arg) + '.' + fig_fmt
+    plt.savefig(out_name, format=fig_fmt, dpi=1200)
 else:
     plt.show(block=True)
 plt.close()

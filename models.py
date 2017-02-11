@@ -26,6 +26,18 @@ QR_ARR = (9.24792, -2.64281, 0.133386, -1.35932, 1.25338, 0.45602, -0.326422, 0.
 
 ##### Global functions
 
+# For parsing and loading simulation's results
+def read_simulation(fname):
+    with open(fname) as file:
+        file_s = file.readlines()
+    arr = np.zeros(shape=(len(file_s), 2), dtype=float)
+    for i, line in enumerate(file_s):
+        # Finding delimiters
+        ini, mid, en = line.find('('), line.find(','), line.find(')')
+        # Formating
+        arr[i, 0], arr[i, 1] = float(line[ini+1:mid]), float(line[mid+1:en])
+    return arr
+
 # Compute the squared error
 def sqe_array(f, f_i):
     hold = f - f_i
